@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>EcoTrack Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2em; }
+    #chart-container { width: 600px; margin: auto; }
+    #controls { margin-bottom: 2em; }
+    label { margin-right: 1em; }
+  </style>
+</head>
+<body>
+  <h1>EcoTrack - Visualisation des indicateurs</h1>
+  <div id="controls">
+    <label>Type: <input id="type" value="pm25"></label>
+    <label>Zone ID: <input id="zone_id" value="1" type="number"></label>
+    <label>De: <input id="from_ts" value="2025-11-01T00:00:00"></label>
+    <label>À: <input id="to_ts" value="2025-11-21T23:59:59"></label>
+    <button onclick="loadChart()">Afficher</button>
+  </div>
+  <div id="chart-container">
+    <canvas id="myChart"></canvas>
+  </div>
+  <script>
+    async function loadChart() {
+      const type = document.getElementById('type').value;
+      const zone_id = document.getElementById('zone_id').value;
+      const from_ts = document.getElementById('from_ts').value;
+      const to_ts = document.getElementById('to_ts').value;
+      const url = `/indicators/stats/average?type=${type}&zone_id=${zone_id}&from_ts=${from_ts}&to_ts=${to_ts}`;
+      let data;
+      try {
+        const res = await fetch(url);
+        data = await res.json();
+      } catch (e) {
+        alert('Erreur API: ' + e);
+        return;
+      }
+      const ctx = document.getElementById('myChart').getContext('2d');
+      if(window.myChart) window.myChart.destroy();
+      window.myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.labels,
+          datasets: [{
+            label: 'Moyenne',
+            data: data.series,
+            borderColor: 'blue',
+            backgroundColor: 'rgba(0,0,255,0.1)',
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: true } },
+          scales: { x: { title: { display: true, text: 'Date' } }, y: { title: { display: true, text: 'Valeur' } } }
+        }
+      });
+    }
+    loadChart();
+  </script>
+</body>
+</html>
